@@ -1,6 +1,8 @@
 require 'dotenv/load' # Load environment variables from .env file
 require 'discordrb'
 
+# Manually trigger audit of people in the channel
+
 class AttendanceLogger
     def initialize
         @attendance_log = []

@@ -20,13 +20,16 @@ MyServerID = '163453933400883201'
 bot.ready do |event|
   puts 'Bot is ready!'
   puts bot.name
+ # bot.FleetMemberList = [];
+  
 
   bot.servers.each do |server|
     puts "Server: #{server[1].name} (ID: #{server[0]})"
+    # Here we check if the bot is already on the server with the ID MyServerID
     if server.any? { |b| b == MyServerID }
-      puts "Bot is already on server named: #{server[1].name}, with ID: #{server[1]}"
+      puts "Bot is already on server!"
     else
-      puts "Bot is not on server: #{server.name}"
+      puts "Bot is not on server: #{server[1].name}"
     end
   end
 end
@@ -42,6 +45,11 @@ puts 'Click on it to invite it to your server.'
 # The code inside it will be executed, and a "Pong!" response will be sent to the channel.
 bot.message(content: 'Ping!') do |event|
   event.respond 'Pong!'
+end
+
+bot.message(content: 'Record!') do |event|
+  event.respond 'Certain Fleet Commander!'
+
 end
 
 # This method call has to be put at the end of your script, it is what makes the bot actually connect to Discord. If you
