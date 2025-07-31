@@ -6,7 +6,7 @@ tracked_channel = nil
 bot = Discordrb::Bot.new(name: ENV['DISCORD_BOT_NAME'], token: ENV['DISCORD_BOT_TOKEN'], client_id: ENV['DISCORD_CLIENT_ID'])
 
 bot.message(with_text: '!t') do |event|
-  # next unless event.content == '!track' || event.content == '!t'
+  next unless event.content == '!track' || event.content == '!t'
   puts event.author
   puts event.author.inspect
 

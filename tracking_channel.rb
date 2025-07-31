@@ -8,9 +8,10 @@ class Tracking_Channel
   attr_reader :host_stopped
 
   # Initializes a new Channel instance
-  def initialize(id, name, hoster_id, host_started = DateTime.now)
+  def initialize(id, name, server_id, hoster_id, host_started = DateTime.now)
     @id = id
     @name = name
+    @server_id = server_id
     @hoster_id = hoster_id
     @host_started = host_started
   end

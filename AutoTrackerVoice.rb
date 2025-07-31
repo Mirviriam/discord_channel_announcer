@@ -27,8 +27,6 @@ bot = Discordrb::Bot.new(
 
 # bot.debug = true
 
-# bot = Discordrb::Bot.new(token: ENV['DISCORD_BOT_TOKEN'], client_id: ENV['DISCORD_CLIENT_ID'], intents: %i[servers server_messages server_voice_states])
-
 MyServerID = '163453933400883201'
 $tracked_voice_channels = {}
 

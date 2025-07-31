@@ -14,7 +14,7 @@ MyEventChannel = 'General'.freeze
 START_REPLY = 'Where does one ever truly begin?'.freeze
 
 server_id = ENV['DISCORD_SERVER_TEST_ID']
-puts server_id
+
 
 bot = Discordrb::Bot.new(
   name: ENV['DISCORD_BOT_NAME'],
@@ -53,9 +53,13 @@ bot.message(content: START_CMD) do |event|
   # TODO:  Add discord profile versus server profile handler for FC Name
   event.respond "Certainly Fleet Commander - Starting tracking of fleet members!"
 
-  tracking_channel = Tracking_Channel.new(voice_channel.id, voice_channel.name, author.id)
+  tracking_channel = Tracking_Channel.new(
+    voice_channel.id,
+    voice_channel.name,
+    server_id,
+    author.id
+  )
 
-  puts "Message channel: #{event.channel.name}"
   puts "Voice Channel: #{tracking_channel.name}"
 end
 
