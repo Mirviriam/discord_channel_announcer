@@ -97,3 +97,5 @@ end
 
 
 bot.run
+
+# this took an hour and half to formalize after getting working prototype
