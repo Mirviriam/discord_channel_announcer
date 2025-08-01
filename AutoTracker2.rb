@@ -17,6 +17,7 @@ START_REPLY = 'Where does one ever truly begin?'.freeze
 
 server_id = ENV['DISCORD_SERVER_TEST_ID']
 tracking_config = {}
+post_tracking = {}
 
 bot = Discordrb::Bot.new(
   name: ENV['DISCORD_BOT_NAME'],
@@ -92,9 +93,17 @@ bot.message(content: STOP_CMD) do |event|
   event.respond 'Certainly Fleet Commander - Stopping tracking of fleet members!'
   tracking_config[author.id].set_end_time
   tracking_config[author.id].channel.send("Fleet Commander has stopped tracking fleet members!")
-  puts tracking_config[author.id].host_stopped
+  post_tracking[author.id] = tracking_config[author.id]
+  puts "Tracking stopped for: #{tracking_config[author.id].name} (ID: #{tracking_config[author.id].id}) @ #{tracking_config[author.id].host_stopped}"
+  tracking_config.delete(author.id)
 end
 
+bot.voice_state_update do |event|
+  next unless tracking_config.any?
+  author = event.user
+
+  # We need determine the event is for an channel being actively tracked
+end
 
 bot.run
 
