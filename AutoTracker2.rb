@@ -66,15 +66,7 @@ bot.message(content: START_CMD) do |event|
   author = event.author
   puts "Message Author: #{author.name}"
 
-  voice_channel = bot.server(server_id).member(author.id).voice_channel
-
-  tracking_channel = Tracking_Channel.new(
-    voice_channel.id,
-    voice_channel.name,
-    voice_channel,
-    server_id,
-    author.id
-  )
+  tracking_channel = Tracking_Channel.from_discord(bot.server(server_id).member(author.id).voice_channel, author.id)
 
   # After we have this channel info stashed in host id, we should use as single source of truth
   tracking_config[tracking_channel.hoster_id] = tracking_channel
@@ -99,11 +91,41 @@ bot.message(content: STOP_CMD) do |event|
 end
 
 bot.voice_state_update do |event|
+  # Skip if no tracking config is present
   next unless tracking_config.any?
-  author = event.user
+
+    before = event.old_channel
+    after = event.channel
 
   # We need determine the event is for an channel being actively tracked
-end
+  puts "before channel: #{event.before.name} (ID: #{event.before.id})"
+  puts "after channel: #{event.after.name} (ID: #{event.after.id})"
+  next unless tracking_config.any(before.id) || after.id == tracked_channel_id
+
+    timestamp = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Only track the specific channel
+    if before.id == tracking_config[author.id].id || after.id == tracking_config[author.id].id
+      if before.nil? && after
+        joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
+        puts joined_message
+        tracking_config[author.id].channel.send(joined_message)
+      elsif before && after.nil?
+        left_message = "#{timestamp} -- #{author.username} left #{before.name}"
+        puts left_message
+        tracking_config[author.id].channel.send(left_message)
+      elsif before != after && before&.id == tracking_config[author.id].id
+        left_message = "#{timestamp} -- #{author.username} left #{before.name}"
+        puts left_message
+        tracking_config[author.id].channel.send(left_message)
+      elsif before != after && after&.id == tracking_config[author.id].id
+        joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
+        puts joined_message
+        tracking_config[author.id].channel.send(joined_message)
+      end
+    end
+  end
+
 
 bot.run
 
