@@ -22,4 +22,8 @@ class Tracking_Channel
   def set_end_time(host_stopped = DateTime.now)
     @host_stopped = host_stopped
   end
+
+  def self.from_discord(channel, hoster_id, started = DateTime.now)
+    new(channel.id, channel.name, channel, channel.guild_id, hoster_id, started)
+  end
 end
