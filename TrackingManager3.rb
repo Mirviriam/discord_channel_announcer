@@ -3,13 +3,14 @@ require_relative 'tracking_channel'
 class TrackingManager
   def initialize
     @sessions = {} # hoster_id => Tracking_Channel
+    @sessions_over = {} # hoster_id => Tracking_Channel
   end
 
   # --- Session Management ---
 
   # Start tracking a user in a voice channel
-  def start_tracking(channel, server_id, hoster)
-    # stop_tracking(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
+  def start_tracking_channel(channel, server_id, hoster)
+    # stop_tracking_channel(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
     return puts "Channel tracked already" if session_for_channel(channel)
     return puts "Hoster tracked already" if session_for_hoster(hoster)
 
@@ -19,12 +20,14 @@ class TrackingManager
     session
   end
 
-  # Stop tracking a hoster (e.g., stream ended)
-  def stop_tracking(hoster_id)
+  # Remove tracking a hoster (e.g., stream ended)
+  def stop_tracking_channel(hoster_id)
     session = @sessions[hoster_id]
     return nil unless session&.active?
+    puts "Stopping tracking for hoster: (#{hoster_id}) in channel: #{session.name} (ID: #{session.id})"
 
     session.set_end_time
+    @sessions_over[hoster_id] = session
     @sessions.delete(hoster_id)
     session
   end
@@ -133,5 +136,5 @@ end
 # puts discord_channel
 
 # tracking_manager = TrackingManager.new
-# tm = tracking_manager.start_tracking(discord_channel, hoster)
+# tm = tracking_manager.start_tracking_channel(discord_channel, hoster)
 # puts tm.inspect

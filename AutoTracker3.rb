@@ -18,7 +18,7 @@ START_REPLY = 'Where does one ever truly begin?'.freeze
 
 server_id = ENV['DISCORD_SERVER_TEST_ID']
 tracking_config = {}
-post_tracking = {}
+channel_track_stopped = {}
 channel_tracker = TrackingManager.new
 
 bot = Discordrb::Bot.new(
@@ -65,13 +65,14 @@ end
 
 # !Start-Tracking command
 bot.message(content: START_CMD) do |event|
+  event.respond 'Command received Fleet Commander - Standby...'
   author = event.author
   puts "Message Author: #{author.name}"
 
   # Need to remember what we just added to check it
   voice_channel = bot.server(server_id).member(author.id).voice_channel
   # Adding tracking for channel, object handles is it already tracked
-  channel_tracker.start_tracking(voice_channel, server_id, author)
+  channel_tracker.start_tracking_channel(voice_channel, server_id, author)
   # Checking result
   puts channel_tracker.active_channel?(voice_channel)
 
@@ -89,23 +90,25 @@ end
 
 # !Stop-Tracking command
 bot.message(content: STOP_CMD) do |event|
+  event.respond 'Command received Fleet Commander - Standby...'
   author = event.author
+
+  session = channel_tracker.session_for_hoster(author.id)
+  channel_tracker.stop_tracking_channel(author.id)
+
   event.respond 'Certainly Fleet Commander - Stopping tracking of fleet members!'
-  tracking_config[author.id].set_end_time
-  tracking_config[author.id].channel.send("Fleet Commander has stopped tracking fleet members!")
-  post_tracking[author.id] = tracking_config[author.id]
-  puts "Tracking stopped for: #{tracking_config[author.id].name} (ID: #{tracking_config[author.id].id}) @ #{tracking_config[author.id].host_stopped}"
-  tracking_config.delete(author.id)
+  session.channel.send("Fleet Commander has stopped tracking fleet members!")
 end
 
 bot.voice_state_update do |event|
-  # Skip if no tracking config is present
-  next unless tracking_config.any?
+  author = event.author
+  return "Error:  No active tracking for this user running command" unless channel_tracker.active?(author.id)
 
-    before = event.old_channel
-    after = event.channel
+  before = event.old_channel
+  after = event.channel
 
-  # We need determine the event is for an channel being actively tracked
+
+  # We need output to console the event is for an channel being actively tracked
   puts "before channel: #{event.before.name} (ID: #{event.before.id})"
   puts "after channel: #{event.after.name} (ID: #{event.after.id})"
 
