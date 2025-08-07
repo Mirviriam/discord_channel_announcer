@@ -2,6 +2,7 @@
 require 'dotenv/load' # Load environment variables from .env file
 require 'discordrb'
 require_relative 'tracking_channel'
+require_relative 'TrackingManager3'
 
 # TODO: extract these constants to a config file
 # TODO: restructure so command_name first, then verb in word order
@@ -18,6 +19,7 @@ START_REPLY = 'Where does one ever truly begin?'.freeze
 server_id = ENV['DISCORD_SERVER_TEST_ID']
 tracking_config = {}
 post_tracking = {}
+channel_tracker = TrackingManager.new
 
 bot = Discordrb::Bot.new(
   name: ENV['DISCORD_BOT_NAME'],
@@ -66,17 +68,23 @@ bot.message(content: START_CMD) do |event|
   author = event.author
   puts "Message Author: #{author.name}"
 
-  tracking_channel = Tracking_Channel.from_discord(bot.server(server_id).member(author.id).voice_channel, author.id)
+  # Need to remember what we just added to check it
+  voice_channel = bot.server(server_id).member(author.id).voice_channel
+  # Adding tracking for channel, object handles is it already tracked
+  channel_tracker.start_tracking(voice_channel, server_id, author)
+  # Checking result
+  puts channel_tracker.active_channel?(voice_channel)
 
-  # After we have this channel info stashed in host id, we should use as single source of truth
-  tracking_config[tracking_channel.hoster_id] = tracking_channel
+  # rather than calling from old data, we are using the object now as source of truth
+  session = channel_tracker.session_for_channel(voice_channel)
 
   # TODO:  Add discord profile versus server profile handler for FC Name
   event.respond "Certainly Fleet Commander - Starting tracking of fleet members!"
-  puts "Voice Channel: #{tracking_config[author.id].id} - #{tracking_config[author.id].name}"
+  puts session.inspect
+  puts "Voice Channel: #{session.id} - #{session.name}"
 
-  tracking_config[author.id].channel.send("Fleet Commander has started tracking fleet members!")
-  tracking_config[author.id].channel.send("Please rejoin voice channel to be tracked.")
+  session.channel.send("Fleet Commander has started tracking fleet members!")
+  session.channel.send("Please rejoin voice channel to be tracked.")
 end
 
 # !Stop-Tracking command

@@ -1,4 +1,4 @@
-require_relative 'tracking_channel.rb'
+require_relative 'tracking_channel'
 
 class TrackingManager
   def initialize
@@ -8,13 +8,13 @@ class TrackingManager
   # --- Session Management ---
 
   # Start tracking a user in a voice channel
-  def start_tracking(channel, hoster)
+  def start_tracking(channel, server_id, hoster)
     # stop_tracking(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
     return puts "Channel tracked already" if session_for_channel(channel)
-    return puts "Hoster tracked already" if session_for_hoster(hoster.id)
+    return puts "Hoster tracked already" if session_for_hoster(hoster)
 
     # session = Tracking_Channel.from_discord(channel, hoster.id)
-    session = Tracking_Channel.from_discord(channel, hoster.id)
+    session = Tracking_Channel.from_discord(channel, server_id, hoster)
     @sessions[hoster.id] = session
     session
   end
@@ -124,14 +124,14 @@ class TrackingManager
   end
 end
 
-HostStruct = Struct.new(:name, :id)
-hoster = HostStruct.new("Steve", 1)
-puts hoster
+# HostStruct = Struct.new(:name, :id)
+# hoster = HostStruct.new("Steve", 1)
+# puts hoster
 
-DiscordChannel = Struct.new(:id, :name, :guild_id, :server_id)
-discord_channel = DiscordChannel.new(123456789, "General", 987654321, 987654321)
-puts discord_channel
+# DiscordChannel = Struct.new(:id, :name, :guild_id, :server_id)
+# discord_channel = DiscordChannel.new(123456789, "General", 987654321, 987654321)
+# puts discord_channel
 
-tracking_manager = TrackingManager.new
-tm = tracking_manager.start_tracking(discord_channel, hoster)
-puts tm.inspect
+# tracking_manager = TrackingManager.new
+# tm = tracking_manager.start_tracking(discord_channel, hoster)
+# puts tm.inspect
