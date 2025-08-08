@@ -65,53 +65,53 @@ class TrackingManager
 
   # --- Event Helpers ---
 
-  # Was the user in a tracked channel, or did they join one?
-  def involved_in_tracked?(before:, after:)
-    [ before, after ].compact.any? { |ch| active_channel?(ch) }
-  end
+  # # Was the user in a tracked channel, or did they join one?
+  # def involved_in_tracked?(before:, after:)
+  #   [ before, after ].compact.any? { |ch| active_channel?(ch) }
+  # end
 
-  # Classify the voice change event
-  def classify_change(before:, after:)
-    was_tracked = active_channel?(before)
-    is_tracked  = active_channel?(after)
+  # # Classify the voice change event
+  # def classify_change(before:, after:)
+  #   was_tracked = active_channel?(before)
+  #   is_tracked  = active_channel?(after)
 
-    return :no_change if !was_tracked && !is_tracked
-    return :same_channel if before&.id == after&.id
+  #   return :no_change if !was_tracked && !is_tracked
+  #   return :same_channel if before&.id == after&.id
 
-    case [was_tracked, is_tracked] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-    in [true, true]  then :switched_between_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-    in [true, false] then :exited_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-    in [false, true] then :entered_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-    else                   :no_change
-    end
-  end
+  #   case [was_tracked, is_tracked] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
+  #   in [true, true]  then :switched_between_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
+  #   in [true, false] then :exited_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
+  #   in [false, true] then :entered_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
+  #   else                   :no_change
+  #   end
+  # end
 
-  # Run action based on event type
-  def handle_voice_change(event, before:, after:, &block)
-    return unless involved_in_tracked?(before: before, after: after)
+  # # Run action based on event type
+  # def handle_voice_change(event, before:, after:, &block)
+  #   return unless involved_in_tracked?(before: before, after: after)
 
-    case classify_change(before: before, after: after)
-    in :switched_between_tracked
-      block&.(:switched, event, from: before, to: after)
+  #   case classify_change(before: before, after: after)
+  #   in :switched_between_tracked
+  #     block&.(:switched, event, from: before, to: after)
 
-    in :exited_tracked
-      if after
-        block&.(:switched_out, event, from: before, to: after)
-      else
-        block&.(:disconnected, event, last: before)
-      end
+  #   in :exited_tracked
+  #     if after
+  #       block&.(:switched_out, event, from: before, to: after)
+  #     else
+  #       block&.(:disconnected, event, last: before)
+  #     end
 
-    in :entered_tracked
-      if before
-        block&.(:switched_in, event, from: before, to: after)
-      else
-        block&.(:connected_in, event, channel: after)
-      end
+  #   in :entered_tracked
+  #     if before
+  #       block&.(:switched_in, event, from: before, to: after)
+  #     else
+  #       block&.(:connected_in, event, channel: after)
+  #     end
 
-    in :same_channel
-      block&.(:no_change, event, channel: after)
-    end
-  end
+  #   in :same_channel
+  #     block&.(:no_change, event, channel: after)
+  #   end
+  # end
 
   # --- Debug / List Active Sessions ---
 
