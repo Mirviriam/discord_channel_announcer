@@ -11,6 +11,7 @@ class TrackingManager
   # Start tracking a user in a voice channel
   def start_tracking_channel(channel, server_id, hoster)
     # stop_tracking_channel(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
+    puts "Channel: #{channel.name} (ID: #{channel.id})"
     return puts "Channel tracked already" if session_for_channel(channel)
     return puts "Hoster tracked already" if session_for_hoster(hoster)
 

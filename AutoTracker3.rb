@@ -115,37 +115,43 @@ bot.message(content: STOP_CMD) do |event|
 end
 
 bot.voice_state_update do |event|
+  # We get: user, old_channel, channel, server_id from event
   # pp event.inspect
 
   before = event.old_channel
   after = event.channel
+  user = event.user
 
   # Only track the specific channel
   next unless channel_tracker.involved_in_tracked?(before: before, after: after)
-  channel = channel_tracker.session_for_channel(after) || channel_tracker.session_for_channel(before)
+  tracked_channel = channel_tracker.session_for_channel(after) || channel_tracker.session_for_channel(before)
+  # puts tracked_channel.inspect
 
   # We need output to console the event is for an channel being actively tracked
-  puts "- before channel: #{before.name} (ID: #{before.id})"
-  puts "- after channel: #{after.name} (ID: #{after.id})"
+  # puts "- before channel: #{before.name} (ID: #{before.id})" if before
+  # puts "- after channel: #{after.name} (ID: #{after.id})" if after
+  # puts "- user: #{user.username} (ID: #{user.id})"
 
   timestamp = Time.now
 
+  # Joining voice channel.channel from nowhere doesn't annouce yet
+  # annoucing not working
   if before.nil? && after
-    joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
+    joined_message = "#{timestamp} -- #{user.username} joined #{after.name}"
     puts joined_message
-    channel.send(joined_message)
+    tracked_channel.channel.send(joined_message)
   elsif before && after.nil?
-    left_message = "#{timestamp} -- #{author.username} left #{before.name}"
+    left_message = "#{timestamp} -- #{user.username} left #{before.name}"
     puts left_message
-    channel.send(left_message)
-  elsif before != after && before&.id == id
-    left_message = "#{timestamp} -- #{author.username} left #{before.name}"
+    tracked_channel.channel.send(left_message)
+  elsif before != after && before&.id == tracked_channel.id
+    left_message = "#{timestamp} -- #{user.username} left #{before.name}"
     puts left_message
-    channel.send(left_message)
-  elsif before != after && after&.id == id
-    joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
+    tracked_channel.channel.send(left_message)
+  elsif before != after && after&.id == tracked_channel.id
+    joined_message = "#{timestamp} -- #{user.username} joined #{after.name}"
     puts joined_message
-    channel.send(joined_message)
+    tracked_channel.channel.send(joined_message)
   end
 end
 
