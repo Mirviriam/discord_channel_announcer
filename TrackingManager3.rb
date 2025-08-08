@@ -65,10 +65,10 @@ class TrackingManager
 
   # --- Event Helpers ---
 
-  # # Was the user in a tracked channel, or did they join one?
-  # def involved_in_tracked?(before:, after:)
-  #   [ before, after ].compact.any? { |ch| active_channel?(ch) }
-  # end
+  # Was the user in a tracked channel, or did they join one?
+  def involved_in_tracked?(before:, after:)
+    [ before, after ].compact.any? { |ch| active_channel?(ch) }
+  end
 
   # # Classify the voice change event
   # def classify_change(before:, after:)
