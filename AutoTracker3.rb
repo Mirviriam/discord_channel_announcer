@@ -17,8 +17,6 @@ MyEventChannel = 'General'.freeze
 START_REPLY = 'Where does one ever truly begin?'.freeze
 
 server_id = ENV['DISCORD_SERVER_TEST_ID']
-tracking_config = {}
-channel_track_stopped = {}
 channel_tracker = TrackingManager.new
 
 bot = Discordrb::Bot.new(
