@@ -36,7 +36,6 @@ end
 bot.voice_state_update do |event|
   next unless tracking_config.any?
 
-  user_id = event.user.id
   before = event.before
   after = event.after
   timestamp = Time.now.strftime("%Y-%m-%d %H:%M:%S")

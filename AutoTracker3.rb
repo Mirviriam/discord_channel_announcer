@@ -27,6 +27,15 @@ bot = Discordrb::Bot.new(
   client_id: ENV['DISCORD_CLIENT_ID']
 )
 
+def notifier(msg, event)
+  puts msg
+  if event && respond_to?(:respond, true)
+    event.respond(msg)
+  else
+    puts "(Could not respond: event unavailable)"
+  end
+end
+
 # Bot ready and invite to server necessary?
 bot.ready do |event|
   puts 'Bot is ready!'
@@ -60,17 +69,20 @@ end
 
 #   voice_channel.send('Hello, this is a message!')
 
-#   event.respond START_REPLY
-# end
+# Test:   starting in channel, not in channel
 
 # !Start-Tracking command
 bot.message(content: START_CMD) do |event|
-  event.respond 'Command received Fleet Commander - Standby...'
+  notifier('Command received Fleet Commander - Standby...', event)
   author = event.author
-  puts "Message Author: #{author.name}"
 
-  # Need to remember what we just added to check it
+  # Must be in a channel to start tracking
   voice_channel = bot.server(server_id).member(author.id).voice_channel
+  if voice_channel.nil?
+    notifier("Host needs to be in a voice channel to track it.", event)
+    next
+  end
+
   # Adding tracking for channel, object handles is it already tracked
   channel_tracker.start_tracking_channel(voice_channel, server_id, author)
   # Checking result
@@ -88,6 +100,8 @@ bot.message(content: START_CMD) do |event|
   session.channel.send("Please rejoin voice channel to be tracked.")
 end
 
+# Test:  Stopping in channel, not in channel + if tracking started not in channel (cause nothing there to end tracking)
+
 # !Stop-Tracking command
 bot.message(content: STOP_CMD) do |event|
   event.respond 'Command received Fleet Commander - Standby...'
@@ -101,43 +115,39 @@ bot.message(content: STOP_CMD) do |event|
 end
 
 bot.voice_state_update do |event|
-  author = event.author
-  return "Error:  No active tracking for this user running command" unless channel_tracker.active?(author.id)
+  # pp event.inspect
 
   before = event.old_channel
   after = event.channel
 
+  # Only track the specific channel
+  next unless channel_tracker.involved_in_tracked?(before: before, after: after)
+  channel = channel_tracker.session_for_channel(after) || channel_tracker.session_for_channel(before)
 
   # We need output to console the event is for an channel being actively tracked
-  puts "before channel: #{event.before.name} (ID: #{event.before.id})"
-  puts "after channel: #{event.after.name} (ID: #{event.after.id})"
+  puts "- before channel: #{before.name} (ID: #{before.id})"
+  puts "- after channel: #{after.name} (ID: #{after.id})"
 
-  next unless check_tracked_channel?(tracking_config, before: before, after: after)
+  timestamp = Time.now
 
-
-    timestamp = Time.now.strftime("%Y-%m-%d %H:%M:%S")
-
-    # Only track the specific channel
-    if before.id == tracking_config[author.id].id || after.id == tracking_config[author.id].id
-      if before.nil? && after
-        joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
-        puts joined_message
-        tracking_config[author.id].channel.send(joined_message)
-      elsif before && after.nil?
-        left_message = "#{timestamp} -- #{author.username} left #{before.name}"
-        puts left_message
-        tracking_config[author.id].channel.send(left_message)
-      elsif before != after && before&.id == tracking_config[author.id].id
-        left_message = "#{timestamp} -- #{author.username} left #{before.name}"
-        puts left_message
-        tracking_config[author.id].channel.send(left_message)
-      elsif before != after && after&.id == tracking_config[author.id].id
-        joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
-        puts joined_message
-        tracking_config[author.id].channel.send(joined_message)
-      end
-    end
+  if before.nil? && after
+    joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
+    puts joined_message
+    channel.send(joined_message)
+  elsif before && after.nil?
+    left_message = "#{timestamp} -- #{author.username} left #{before.name}"
+    puts left_message
+    channel.send(left_message)
+  elsif before != after && before&.id == id
+    left_message = "#{timestamp} -- #{author.username} left #{before.name}"
+    puts left_message
+    channel.send(left_message)
+  elsif before != after && after&.id == id
+    joined_message = "#{timestamp} -- #{author.username} joined #{after.name}"
+    puts joined_message
+    channel.send(joined_message)
   end
+end
 
 
 bot.run
