@@ -25,15 +25,6 @@ bot = Discordrb::Bot.new(
   client_id: ENV['DISCORD_CLIENT_ID']
 )
 
-def notifier(msg, event)
-  puts msg
-  if event && respond_to?(:respond, true)
-    event.respond(msg)
-  else
-    puts "(Could not respond: event unavailable)"
-  end
-end
-
 # Bot ready and invite to server necessary?
 bot.ready do |event|
   puts 'Bot is ready!'
@@ -44,10 +35,6 @@ bot.ready do |event|
     # Here we check if the bot is already on the server with the ID MyServerID
     if server.any? { |b| b == server_id }
       puts "Bot is already on server!"
-      bot.server(server_id).channels.each do |channel|
-        puts "Channel: #{channel.name} (ID: #{channel.id}) -- #{channel.text? ? "Text Channel" : "Voice Channel"}"
-        # puts channel.inspect
-      end
     else
       puts "Bot is not on server: #{server[1].name}"
       puts "Click this invite URL to add it:  #{bot.invite_url}"
@@ -55,102 +42,76 @@ bot.ready do |event|
   end
 end
 
-# Bot test receiving messages - !
-# bot.message(content: Bot_Prefix) do |event|
-#   unless event.message.content.length < 100
-#     event.respond "Input too long! Keep it under 100 characters."
-#     next
-#   end
-#   author = event.author
-#   voice_channel = bot.server(server_id).member(author.id).voice_channel
-#   puts "Found channel: #{voice_channel.name} (ID: #{voice_channel.id})"
-
-#   voice_channel.send('Hello, this is a message!')
-
-# Test:   starting in channel, not in channel
-
 # !Start-Tracking command
 bot.message(content: START_CMD) do |event|
-  notifier('Command received Fleet Commander - Standby...', event)
   author = event.author
+  hoster_name = bot.server(server_id).member(author.id).display_name
+  voice_channel = bot.server(server_id).member(author).voice_channel
 
-  # Must be in a channel to start tracking
-  voice_channel = bot.server(server_id).member(author.id).voice_channel
-  if voice_channel.nil?
-    notifier("Host needs to be in a voice channel to track it.", event)
-    next
-  end
+  # Calls to notifier must be after it's defined
+  event.respond("Command received Fleet Commander #{hoster_name} - Standby...")
 
   # Adding tracking for channel, object handles is it already tracked
-  channel_tracker.start_tracking_channel(voice_channel, server_id, author)
-  # Checking result
-  puts channel_tracker.active_channel?(voice_channel)
-
+  channel_tracker.start_tracking_channel(voice_channel, server_id, author.id)
   # rather than calling from old data, we are using the object now as source of truth
   session = channel_tracker.session_for_channel(voice_channel)
 
-  # TODO:  Add discord profile versus server profile handler for FC Name
-  event.respond "Certainly Fleet Commander - Starting tracking of fleet members!"
-  puts session.inspect
-  puts "Voice Channel: #{session.id} - #{session.name}"
+  # Must be in a channel to start tracking
+  if voice_channel.nil?
+    event.respond("Host needs to be in a voice channel to track it.")
+    next
+  else
+    event.respond("Beginning tracking of channel #{voice_channel.name} (ID: #{voice_channel.id})")
+  end
 
-  session.channel.send("Fleet Commander has started tracking fleet members!")
-  session.channel.send("Please rejoin voice channel to be tracked.")
+  session.channel.send "Fleet Commander #{hoster_name} has started tracking fleet members!"
+  session.channel.send "Please rejoin voice channel to be tracked."
 end
 
+# TODO:  The tests
 # Test:  Stopping in channel, not in channel + if tracking started not in channel (cause nothing there to end tracking)
 
 # !Stop-Tracking command
 bot.message(content: STOP_CMD) do |event|
-  event.respond 'Command received Fleet Commander - Standby...'
-  author = event.author
+  hoster_name = bot.server(server_id).member(event.author.id).display_name
+  event.respond "Command received Fleet Commander #{hoster_name} - Standby..."
 
-  session = channel_tracker.session_for_hoster(author.id)
-  channel_tracker.stop_tracking_channel(author.id)
+  session = channel_tracker.session_for_hoster(event.author.id)
 
-  event.respond 'Certainly Fleet Commander - Stopping tracking of fleet members!'
-  session.channel.send("Fleet Commander has stopped tracking fleet members!")
+  event.respond 'Stopping tracking of fleet members!'
+  if session && session.channel
+    session.channel.send "Fleet Commander #{hoster_name} has stopped tracking fleet members!"
+  end
 end
 
 bot.voice_state_update do |event|
-  # We get: user, old_channel, channel, server_id from event
-  # pp event.inspect
-
   before = event.old_channel
   after = event.channel
-  user = event.user
+  user_name = bot.server(server_id).member(event.user.id).display_name
 
   # Only track the specific channel
   next unless channel_tracker.involved_in_tracked?(before: before, after: after)
-  tracked_channel = channel_tracker.session_for_channel(after) || channel_tracker.session_for_channel(before)
-  # puts tracked_channel.inspect
 
-  # We need output to console the event is for an channel being actively tracked
-  # puts "- before channel: #{before.name} (ID: #{before.id})" if before
-  # puts "- after channel: #{after.name} (ID: #{after.id})" if after
-  # puts "- user: #{user.username} (ID: #{user.id})"
+  # Setup the following decision structure to be a bit more comprehensible even if it disconnects logic
+  tracked_channel = channel_tracker.session_for_channel(after) || channel_tracker.session_for_channel(before)
 
   timestamp = Time.now
 
-  # Joining voice channel.channel from nowhere doesn't annouce yet
-  # annoucing not working
+  # this grabs the extra variables that are already declared due to lambda scope quirk
+  format_message = ->(verb) { "#{timestamp} -- #{user_name} #{verb} #{tracked_channel.name}" }
+
   if before.nil? && after
-    joined_message = "#{timestamp} -- #{user.username} joined #{after.name}"
-    puts joined_message
-    tracked_channel.channel.send(joined_message)
+    message = format_message.call "joined"
   elsif before && after.nil?
-    left_message = "#{timestamp} -- #{user.username} left #{before.name}"
-    puts left_message
-    tracked_channel.channel.send(left_message)
+    message = format_message.call "left"
   elsif before != after && before&.id == tracked_channel.id
-    left_message = "#{timestamp} -- #{user.username} left #{before.name}"
-    puts left_message
-    tracked_channel.channel.send(left_message)
+    message = format_message.call "left"
   elsif before != after && after&.id == tracked_channel.id
-    joined_message = "#{timestamp} -- #{user.username} joined #{after.name}"
-    puts joined_message
-    tracked_channel.channel.send(joined_message)
+    message = format_message.call "joined"
+  else
   end
+  tracked_channel.channel.send message
+  event.respond message if verbose_mode
 end
 
 
