@@ -46,7 +46,7 @@ end
 bot.message(content: START_CMD) do |event|
   author = event.author
   hoster_name = bot.server(server_id).member(author.id).display_name
-  voice_channel = bot.server(server_id).member(author).voice_channel
+  voice_channel = bot.server(server_id).member(author.id).voice_channel
 
   # Calls to notifier must be after it's defined
   event.respond("Command received Fleet Commander #{hoster_name} - Standby...")
