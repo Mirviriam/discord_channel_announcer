@@ -1,5 +1,11 @@
 require_relative 'tracking_channel'
 
+  def empty_check(param, param_name = "parameter")
+    if param.nil? || param == "" || (param.respond_to?(:blank?) && param.blank?)
+      raise ArgumentError, "#{param_name} is required"
+    end
+  end
+
 class TrackingManager
   def initialize
     @sessions = {} # hoster_id => Tracking_Channel
@@ -10,13 +16,9 @@ class TrackingManager
 
   # Start tracking a user in a voice channel
   def start_tracking_channel(channel, server_id, hoster_id)
-  # stop_tracking_channel(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
+  return if tracking?(hoster_id) && active?(hoster_id)
 
-  def empty_check(param, param_name = "parameter")
-    if param.nil? || param == "" || (param.respond_to?(:blank?) && param.blank?)
-      raise ArgumentError, "#{param_name} is required"
-    end
-  end
+
 
   empty_check(channel, "channel")
   empty_check(server_id, "server_id")

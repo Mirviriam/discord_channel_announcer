@@ -48,7 +48,7 @@ bot.message(content: START_CMD) do |event|
   hoster_name = bot.server(server_id).member(author.id).display_name
 
   # Calls to notifier must be after it's defined
-  event.respond("Command received Fleet Commander #{hoster_name} - Standby...")
+  event.respond "Command received Fleet Commander #{hoster_name} - Standby..."
 
   voice_channel = bot.server(server_id).member(author.id).voice_channel
 
@@ -59,10 +59,11 @@ bot.message(content: START_CMD) do |event|
 
   # Must be in a channel to start tracking
   if voice_channel.nil?
-    event.respond("Host needs to be in a voice channel to track it.")
+    event.respond "Host needs to be in a voice channel to track it."
     next
   else
-    event.respond("Beginning tracking of channel #{voice_channel.name} (ID: #{voice_channel.id})")
+    event.respond "Everything you create, you use to destroy ... "
+    event.respond "Beginning tracking of channel #{voice_channel.name} (ID: #{voice_channel.id})"
   end
 end
 
