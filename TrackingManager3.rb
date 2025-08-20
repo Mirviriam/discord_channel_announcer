@@ -18,8 +18,6 @@ class TrackingManager
   def start_tracking_channel(channel, server_id, hoster_id)
   return if tracking?(hoster_id) && active?(hoster_id)
 
-
-
   empty_check(channel, "channel")
   empty_check(server_id, "server_id")
   empty_check(hoster_id, "hoster_id")
@@ -30,8 +28,8 @@ class TrackingManager
     session = Tracking_Channel.from_discord(channel, server_id, hoster_id)
     @sessions[hoster_id] = session
     puts "Starting tracking for hoster: (#{hoster_id}) in channel: #{session.name} (ID: #{session.id})"
-    session.channel.send "Fleet Commander has started tracking fleet members!"
-    session.channel.send "Please rejoin voice channel to be tracked."
+    session.channel.send 'Fleet Commander has started tracking fleet members!'
+    session.channel.send 'Please rejoin voice channel to be tracked.'
     session
   end
 
@@ -44,7 +42,7 @@ class TrackingManager
     session.set_end_time
     @sessions_over[hoster_id] = session
     @sessions.delete(hoster_id)
-    session.channel.send "Fleet Commander has stopped tracking fleet members!"
+    session.channel.send 'Fleet Commander has stopped tracking fleet members!'
     session
   end
 

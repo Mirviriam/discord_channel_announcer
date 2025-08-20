@@ -34,7 +34,7 @@ bot.ready do |event|
     puts "Server: #{server[1].name} (ID: #{server[0]})"
     # Here we check if the bot is already on the server with the ID MyServerID
     if server.any? { |b| b == server_id }
-      puts "Bot is already on server!"
+      puts 'Bot is already on server!'
     else
       puts "Bot is not on server: #{server[1].name}"
       puts "Click this invite URL to add it:  #{bot.invite_url}"
@@ -59,10 +59,10 @@ bot.message(content: START_CMD) do |event|
 
   # Must be in a channel to start tracking
   if voice_channel.nil?
-    event.respond "Host needs to be in a voice channel to track it."
+    event.respond 'Host needs to be in a voice channel to track it.'
     next
   else
-    event.respond "Everything you create, you use to destroy ... "
+    event.respond 'Everything you create, you use to destroy -L'
     event.respond "Beginning tracking of channel #{voice_channel.name} (ID: #{voice_channel.id})"
   end
 end
@@ -78,6 +78,7 @@ bot.message(content: STOP_CMD) do |event|
   session = channel_tracker.session_for_hoster(event.author.id)
 
   event.respond 'Stopping tracking of fleet members!'
+  event.respond 'Bzzzzt - End of transmission -RR'
 end
 
 bot.voice_state_update do |event|
@@ -97,13 +98,13 @@ bot.voice_state_update do |event|
   format_message = ->(verb) { "#{timestamp} -- #{user_name} #{verb} #{tracked_channel.name}" }
 
   if before.nil? && after
-    message = format_message.call "joined"
+    message = format_message.call 'joined'
   elsif before && after.nil?
-    message = format_message.call "left"
+    message = format_message.call 'left'
   elsif before != after && before&.id == tracked_channel.id
-    message = format_message.call "left"
+    message = format_message.call 'left'
   elsif before != after && after&.id == tracked_channel.id
-    message = format_message.call "joined"
+    message = format_message.call 'joined'
   else
   end
   tracked_channel.channel.send message
