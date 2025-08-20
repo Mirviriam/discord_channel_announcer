@@ -5,7 +5,7 @@ class AttendanceTracker
   end
 
   def user_joined(user_id)
-    @attendance[user_id][:joined_at] = Time.now
+    @attendance[user_id][:joined_at] ||= Time.now
   end
 
   def user_left(user_id)

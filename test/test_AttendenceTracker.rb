@@ -16,12 +16,13 @@ class TestAttendanceTracker < Minitest::Test
     refute_nil @tracker.instance_variable_get(:@attendance)[@user_id][:joined_at]
   end
 
-  def test_user_left_adds_time
+  def test_user_joined_double_join_does_not_overwrite
     @tracker.user_joined(@user_id)
+    first_joined_at = @tracker.instance_variable_get(:@attendance)[@user_id][:joined_at]
     sleep 1
-    @tracker.user_left(@user_id)
-    assert_operator @tracker.total_time(@user_id), :>=, 1
-    assert_nil @tracker.instance_variable_get(:@attendance)[@user_id][:joined_at]
+    @tracker.user_joined(@user_id)
+    second_joined_at = @tracker.instance_variable_get(:@attendance)[@user_id][:joined_at]
+    assert_equal first_joined_at, second_joined_at
   end
 
   def test_multiple_sessions_accumulate_time
