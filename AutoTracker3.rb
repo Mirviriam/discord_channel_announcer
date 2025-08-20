@@ -44,16 +44,16 @@ end
 
 # !Start-Tracking command
 bot.message(content: START_CMD) do |event|
-  author = event.author
-  hoster_name = bot.server(server_id).member(author.id).display_name
+  author_id = event.author.id
+  hoster_name = bot.server(server_id).member(author_id).display_name
 
   # Calls to notifier must be after it's defined
   event.respond "Command received Fleet Commander #{hoster_name} - Standby..."
 
-  voice_channel = bot.server(server_id).member(author.id).voice_channel
+  voice_channel = bot.server(server_id).member(author_id).voice_channel
 
   # Adding tracking for channel, object handles is it already tracked
-  channel_tracker.start_tracking_channel(voice_channel, server_id, author.id)
+  channel_tracker.start_tracking_channel(voice_channel, server_id, author_id)
   # rather than calling from old data, we are using the object now as source of truth
   session = channel_tracker.session_for_channel(voice_channel)
 
