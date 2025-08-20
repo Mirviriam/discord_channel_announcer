@@ -84,7 +84,8 @@ end
 bot.voice_state_update do |event|
   before = event.old_channel
   after = event.channel
-  user_name = bot.server(server_id).member(event.user.id).display_name
+  user_id = event.user.id
+  user_name = bot.server(server_id).member(user_id).display_name
 
   # Only track the specific channel
   next unless channel_tracker.involved_in_tracked?(before: before, after: after)
@@ -99,12 +100,16 @@ bot.voice_state_update do |event|
 
   if before.nil? && after
     message = format_message.call 'joined'
+    attendance_tracker.user_joined(user_id)
   elsif before && after.nil?
     message = format_message.call 'left'
+    attendance_tracker.user_left(user_id)
   elsif before != after && before&.id == tracked_channel.id
     message = format_message.call 'left'
+    attendance_tracker.user_left(user_id)
   elsif before != after && after&.id == tracked_channel.id
     message = format_message.call 'joined'
+    attendance_tracker.user_joined(user_id)
   else
   end
   tracked_channel.channel.send message
