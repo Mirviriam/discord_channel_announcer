@@ -10,11 +10,17 @@ class TrackingManager
 
   # Start tracking a user in a voice channel
   def start_tracking_channel(channel, server_id, hoster_id)
-    # stop_tracking_channel(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
+  # stop_tracking_channel(hoster.id) if tracking?(hoster.id) && active?(hoster.id)
 
-    return puts "Channel tracked already" if session_for_channel(channel)
-    return puts "Hoster tracked already" if session_for_hoster(hoster_id)
-    return puts "Hoster must be in channel to track" if channel.nil?
+  def empty_check(param, param_name = "parameter")
+    if param.nil? || param == "" || (param.respond_to?(:blank?) && param.blank?)
+      raise ArgumentError, "#{param_name} is required"
+    end
+  end
+
+  empty_check(channel, "channel")
+  empty_check(server_id, "server_id")
+  empty_check(hoster_id, "hoster_id")
 
     puts "Channel: #{channel.name} (ID: #{channel.id})"
 
@@ -22,6 +28,8 @@ class TrackingManager
     session = Tracking_Channel.from_discord(channel, server_id, hoster_id)
     @sessions[hoster_id] = session
     puts "Starting tracking for hoster: (#{hoster_id}) in channel: #{session.name} (ID: #{session.id})"
+    session.channel.send "Fleet Commander has started tracking fleet members!"
+    session.channel.send "Please rejoin voice channel to be tracked."
     session
   end
 
@@ -34,6 +42,7 @@ class TrackingManager
     session.set_end_time
     @sessions_over[hoster_id] = session
     @sessions.delete(hoster_id)
+    session.channel.send "Fleet Commander has stopped tracking fleet members!"
     session
   end
 
@@ -74,48 +83,6 @@ class TrackingManager
     [ before, after ].compact.any? { |ch| active_channel?(ch) }
   end
 
-  # # Classify the voice change event
-  # def classify_change(before:, after:)
-  #   was_tracked = active_channel?(before)
-  #   is_tracked  = active_channel?(after)
-
-  #   return :no_change if !was_tracked && !is_tracked
-  #   return :same_channel if before&.id == after&.id
-
-  #   case [was_tracked, is_tracked] # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-  #   in [true, true]  then :switched_between_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-  #   in [true, false] then :exited_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-  #   in [false, true] then :entered_tracked # rubocop:disable Layout/SpaceInsideArrayLiteralBrackets
-  #   else                   :no_change
-  #   end
-  # end
-
-  # # Run action based on event type
-  # def handle_voice_change(event, before:, after:, &block)
-  #   return unless involved_in_tracked?(before: before, after: after)
-
-  #   case classify_change(before: before, after: after)
-  #   in :switched_between_tracked
-  #     block&.(:switched, event, from: before, to: after)
-
-  #   in :exited_tracked
-  #     if after
-  #       block&.(:switched_out, event, from: before, to: after)
-  #     else
-  #       block&.(:disconnected, event, last: before)
-  #     end
-
-  #   in :entered_tracked
-  #     if before
-  #       block&.(:switched_in, event, from: before, to: after)
-  #     else
-  #       block&.(:connected_in, event, channel: after)
-  #     end
-
-  #   in :same_channel
-  #     block&.(:no_change, event, channel: after)
-  #   end
-  # end
 
   # --- Debug / List Active Sessions ---
 

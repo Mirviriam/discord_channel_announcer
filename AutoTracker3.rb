@@ -1,7 +1,7 @@
 # This simple bot responds to every "Ping!" message with a "Pong!"
 require 'dotenv/load' # Load environment variables from .env file
 require 'discordrb'
-require_relative 'tracking_channel'
+# require_relative 'tracking_channel'
 require_relative 'TrackingManager3'
 
 # TODO: extract these constants to a config file
@@ -46,10 +46,11 @@ end
 bot.message(content: START_CMD) do |event|
   author = event.author
   hoster_name = bot.server(server_id).member(author.id).display_name
-  voice_channel = bot.server(server_id).member(author.id).voice_channel
 
   # Calls to notifier must be after it's defined
   event.respond("Command received Fleet Commander #{hoster_name} - Standby...")
+
+  voice_channel = bot.server(server_id).member(author.id).voice_channel
 
   # Adding tracking for channel, object handles is it already tracked
   channel_tracker.start_tracking_channel(voice_channel, server_id, author.id)
@@ -63,9 +64,6 @@ bot.message(content: START_CMD) do |event|
   else
     event.respond("Beginning tracking of channel #{voice_channel.name} (ID: #{voice_channel.id})")
   end
-
-  session.channel.send "Fleet Commander #{hoster_name} has started tracking fleet members!"
-  session.channel.send "Please rejoin voice channel to be tracked."
 end
 
 # TODO:  The tests
@@ -79,9 +77,6 @@ bot.message(content: STOP_CMD) do |event|
   session = channel_tracker.session_for_hoster(event.author.id)
 
   event.respond 'Stopping tracking of fleet members!'
-  if session && session.channel
-    session.channel.send "Fleet Commander #{hoster_name} has stopped tracking fleet members!"
-  end
 end
 
 bot.voice_state_update do |event|
