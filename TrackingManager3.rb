@@ -97,6 +97,32 @@ class TrackingManager
   def inspect
     "#<TrackingManager active=#{count_active}>"
   end
+
+  # Process a voice state update for attendance and messaging
+  def process_voice_state_update(before, after, user_id, user_name)
+    tracked_channel = session_for_channel(after) || session_for_channel(before)
+    return unless tracked_channel
+
+    timestamp = Time.now
+    format_message = ->(verb) { "#{timestamp} -- #{user_name} #{verb} #{tracked_channel.name}" }
+
+    if before.nil? && after
+      message = format_message.call('joined')
+      @attendance_tracker.user_joined(user_id)
+    elsif before && after.nil?
+      message = format_message.call('left')
+      @attendance_tracker.user_left(user_id)
+    elsif before != after && before&.id == tracked_channel.id
+      message = format_message.call('left')
+      @attendance_tracker.user_left(user_id)
+    elsif before != after && after&.id == tracked_channel.id
+      message = format_message.call('joined')
+      @attendance_tracker.user_joined(user_id)
+    else
+      raise "Error in voice_state_update event handling - if structure failed all conditions"
+    end
+    tracked_channel.channel.send(message)
+  end
 end
 
 # HostStruct = Struct.new(:name, :id)

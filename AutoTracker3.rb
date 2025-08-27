@@ -87,33 +87,10 @@ bot.voice_state_update do |event|
   user_id = event.user.id
   user_name = bot.server(server_id).member(user_id).display_name
 
-  # Only track the specific channel
+  # Only track the specific channel - guards the tracked_channel variable
   next unless channel_tracker.involved_in_tracked?(before: before, after: after)
 
-  # Setup the following decision structure to be a bit more comprehensible even if it disconnects logic
-  tracked_channel = channel_tracker.session_for_channel(after) || channel_tracker.session_for_channel(before)
-
-  timestamp = Time.now
-
-  # this grabs the extra variables that are already declared due to lambda scope quirk
-  format_message = ->(verb) { "#{timestamp} -- #{user_name} #{verb} #{tracked_channel.name}" }
-
-  if before.nil? && after
-    message = format_message.call 'joined'
-    attendance_tracker.user_joined(user_id)
-  elsif before && after.nil?
-    message = format_message.call 'left'
-    attendance_tracker.user_left(user_id)
-  elsif before != after && before&.id == tracked_channel.id
-    message = format_message.call 'left'
-    attendance_tracker.user_left(user_id)
-  elsif before != after && after&.id == tracked_channel.id
-    message = format_message.call 'joined'
-    attendance_tracker.user_joined(user_id)
-  else
-  end
-  tracked_channel.channel.send message
-  event.respond message if verbose_mode
+  channel_tracker.process_voice_state_update(before, after, user_id, user_name)
 end
 
 

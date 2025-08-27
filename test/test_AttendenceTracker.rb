@@ -37,13 +37,19 @@ class TestAttendanceTracker < Minitest::Test
     assert_operator second_total, :>, first_total
   end
 
-  def test_all_times_returns_hash
+  def test_all_times_returns_hash_with_multiple_users
+    user2 = 456
     @tracker.user_joined(@user_id)
     sleep 1
     @tracker.user_left(@user_id)
+    @tracker.user_joined(user2)
+    sleep 2
+    @tracker.user_left(user2)
     times = @tracker.all_times
     assert_kind_of Hash, times
     assert times.key?(@user_id)
+    assert times.key?(user2)
     assert_operator times[@user_id], :>=, 1
+    assert_operator times[user2], :>=, 2
   end
 end
